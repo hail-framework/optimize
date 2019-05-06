@@ -48,7 +48,7 @@ class Example
     
     public function get($name)
     {
-        $file = $folder . DIRECTORY_SEPARATOR . $name . '.json';
+        $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.json';
         
         $data = self::optimizeGet($name, $file);
         if ($data === false) {
