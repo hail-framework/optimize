@@ -44,12 +44,19 @@ class Example
     public function __construct(string $folder)
     {
         $this->folder = $folder;
+        
+        // for Example::getSerializeData
+        self::optimizeReader('data', static fucntion (string $file) {
+            return unserialize(file_get_contents($file));
+        });
     }
     
     public function get($name)
     {
         $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.json';
-        
+
+        // return self::optimizeLoad($file);
+        // or
         $data = self::optimizeGet($name, $file);
         if ($data === false) {
             $content = file_get_contents($file);
@@ -59,6 +66,13 @@ class Example
         }
 
         return $data;
+    }
+    
+    public function getSerializeData($name)
+    {
+        $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.data';
+
+        return self::optimizeLoad($file);
     }
 }
 ```

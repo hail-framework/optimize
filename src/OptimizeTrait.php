@@ -2,6 +2,10 @@
 
 namespace Hail\Optimize;
 
+use Hail\Optimize\Exception\{
+    FileNotExistsException, FileTypeErrorException
+};
+
 trait OptimizeTrait
 {
     /**
@@ -17,21 +21,25 @@ trait OptimizeTrait
     /**
      * @var callable
      */
-    protected static $__optimizeReader;
+    protected static $__optimizeReader = [];
 
     protected static function optimizeInstance(Optimize $object = null): Optimize
     {
         return static::$__optimizeInstance = $object ?? Optimize::getInstance();
     }
 
-    protected static function optimizePrefix(string $prefix)
+    protected static function optimizePrefix(string $prefix): void
     {
         static::$__optimizePrefix = $prefix;
     }
 
-    protected static function optimizeReader(callable $callback)
+    protected static function optimizeReader(string $ext, callable $callback): void
     {
-        static::$__optimizeReader = $callback;
+        if ($ext[0] !== '.') {
+            $ext = '.' . $ext;
+        }
+
+        static::$__optimizeReader[$ext] = $callback;
     }
 
     protected static function optimizeInit(): array
@@ -73,41 +81,34 @@ trait OptimizeTrait
         return $object->set($prefix, $key, $value, $file);
     }
 
-    protected static function optimizeSave(string $file)
-    {
-        [$name, $ext] = static::optimizeFileSplit($file);
-
-        if (static::$__optimizeReader) {
-            $value =  (static::$__optimizeReader)($file);
-        } elseif ($ext === '.php') {
-            $value = include $file;
-        } elseif ($ext === '.json') {
-            $value = \json_decode(\file_get_contents($file), true);
-        } else {
-            throw new \RuntimeException('File type can not support:' . $ext);
-        }
-
-        return static::optimizeSet($name, $value, $file);
-    }
-
     protected static function optimizeLoad(string $file)
     {
-        [$name] = static::optimizeFileSplit($file);
-
-        return static::optimizeGet($name, $file);
-    }
-
-    protected static function optimizeFileSplit(string $file)
-    {
         if (!\file_exists($file)) {
-            throw new \InvalidArgumentException('File not exists');
+            throw new FileNotExistsException('File not exists');
         }
 
         $filename = \basename($file);
         $ext = \strrchr($filename, '.');
-
         $name = \substr($filename, 0, -\strlen($ext));
 
-        return [$name, $ext];
+        $data = static::optimizeGet($name, $file);
+
+        if ($data === false) {
+            if (isset(static::$__optimizeReader[$ext])) {
+                $data = (static::$__optimizeReader[$ext])($file);
+            } elseif ($ext === '.php') {
+                $data = include $file;
+            } elseif ($ext === '.json') {
+                $data = \json_decode(
+                    \file_get_contents($file), true
+                );
+            } else {
+                throw new FileTypeErrorException('File type can not support:' . $ext);
+            }
+
+            static::optimizeSet($name, $data, $file);
+        }
+
+        return $data;
     }
 }
