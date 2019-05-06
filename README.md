@@ -4,7 +4,7 @@ Use the memory extension cache:
 - data after complex operations
 
 
-# Environments
+# Environment Variables
 - HAIL_OPTIMIZE_ADAPTER
     - auto (default)
         - check order: yac, apcu, wincache, redis
