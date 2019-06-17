@@ -6,6 +6,7 @@ use Hail\Optimize\Adapter\{
     Apcu, Redis, WinCache, Yac
 };
 
+\defined('FUNCTION_ENV') || \define('FUNCTION_ENV', \function_exists('\\env'));
 
 /**
  * Use the memory extension cache the data which storage in files,
@@ -73,7 +74,7 @@ class Optimize
 
     private static function env(string $name)
     {
-        if (\function_exists('\\env')) {
+        if (FUNCTION_ENV) {
             return \env($name);
         }
 
