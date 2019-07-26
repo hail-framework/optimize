@@ -45,6 +45,9 @@ class Example
     {
         $this->folder = $folder;
         
+        // support multiple instances, can be ignored in singleton mode
+        self::optimizePrefix(md5($folder));
+
         // for Example::getSerializeData
         self::optimizeReader('data', static fucntion (string $file) {
             return unserialize(file_get_contents($file));

@@ -48,7 +48,7 @@ trait OptimizeTrait
 
         $prefix = static::class;
         if (static::$__optimizePrefix) {
-            $prefix = static::$__optimizePrefix . '|' . $prefix;
+            $prefix .= '|' . static::$__optimizePrefix;
         }
 
         return [$object, $prefix];
