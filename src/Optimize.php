@@ -6,8 +6,6 @@ use Hail\Optimize\Adapter\{
     Apcu, Redis, WinCache, Yac
 };
 
-\defined('FUNCTION_ENV') || \define('FUNCTION_ENV', \function_exists('\\env'));
-
 /**
  * Use the memory extension cache the data which storage in files,
  * reduce file system IO, and improve performance.
@@ -72,20 +70,6 @@ class Optimize
         }
     }
 
-    private static function env(string $name)
-    {
-        if (FUNCTION_ENV) {
-            return \env($name);
-        }
-
-        $value = \getenv($name);
-        if ($value === false) {
-            return null;
-        }
-
-        return $value;
-    }
-
     /**
      * @return static
      */
@@ -93,10 +77,10 @@ class Optimize
     {
         if (static::$instance === null) {
             static::$instance = new static([
-                'adapter' => self::env('HAIL_OPTIMIZE_ADAPTER'),
-                'expire' => (int) self::env('HAIL_OPTIMIZE_EXPIRE'),
-                'delay' => (int) self::env('HAIL_OPTIMIZE_DELAY'),
-                'redis' => self::env('HAIL_OPTIMIZE_REDIS'),
+                'adapter' => \getenv('HAIL_OPTIMIZE_ADAPTER') ?: null,
+                'expire' => (int) \getenv('HAIL_OPTIMIZE_EXPIRE'),
+                'delay' => (int) \getenv('HAIL_OPTIMIZE_DELAY'),
+                'redis' => \getenv('HAIL_OPTIMIZE_REDIS') ?: null,
             ]);
         }
 
