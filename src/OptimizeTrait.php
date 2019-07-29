@@ -33,13 +33,23 @@ trait OptimizeTrait
         static::$__optimizePrefix = $prefix;
     }
 
-    protected static function optimizeReader(string $ext, callable $callback): void
+    /**
+     * @param array|string $ext
+     * @param callable     $callback
+     */
+    protected static function optimizeReader($ext, callable $callback): void
     {
-        if ($ext[0] !== '.') {
-            $ext = '.' . $ext;
-        }
+        if (\is_array($ext)) {
+            foreach ($ext as $e) {
+                self::optimizeReader($e, $callback);
+            }
+        } else {
+            if ($ext[0] !== '.') {
+                $ext = '.' . $ext;
+            }
 
-        static::$__optimizeReader[$ext] = $callback;
+            static::$__optimizeReader[$ext] = $callback;
+        }
     }
 
     protected static function optimizeInit(): array

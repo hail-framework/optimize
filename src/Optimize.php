@@ -83,10 +83,6 @@ class Optimize
             return null;
         }
 
-        if (\strlen($value) > 1 && $value[0] === '"' && $value[-1] === '"') {
-            return \substr($value, 1, -1);
-        }
-
         return $value;
     }
 
