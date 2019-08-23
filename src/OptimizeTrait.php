@@ -28,8 +28,21 @@ trait OptimizeTrait
         return static::$__optimizeInstance = $object ?? Optimize::getInstance();
     }
 
-    protected static function optimizePrefix(string $prefix): void
+    /**
+     * @param string|array $prefix
+     */
+    protected static function optimizePrefix($prefix): void
     {
+        if (\is_array($prefix)) {
+            $prefix = \serialize($prefix);
+        } elseif (!\is_string($prefix)) {
+            throw new \InvalidArgumentException('Prefix only support string or array');
+        }
+
+        if (isset($prefix[32])) {
+            $prefix = \md5($prefix);
+        }
+
         static::$__optimizePrefix = $prefix;
     }
 
