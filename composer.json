@@ -20,12 +20,6 @@
     }
   },
   "license": "MIT",
-  "repositories": [
-    {
-      "type": "vcs",
-      "url": "https://github.com/hail-framework/optimize.git"
-    }
-  ],
   "require": {
     "php": ">=7.1.3"
   },
