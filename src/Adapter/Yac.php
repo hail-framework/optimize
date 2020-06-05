@@ -40,19 +40,9 @@ class Yac implements AdapterInterface
         );
     }
 
-    public function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0): bool
     {
-        return $this->yac->set(self::key($key), $value, $ttl);
-    }
-
-    public function setMultiple(array $values, int $ttl = 0)
-    {
-        $list = [];
-        foreach ($values as $k => $v) {
-            $list[self::key($k)] = $v;
-        }
-
-        return $this->yac->set($list, $ttl);
+        return $this->yac->set(self::key($key), $value, $ttl) !== false;
     }
 
     private static function key($key)

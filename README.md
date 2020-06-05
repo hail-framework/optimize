@@ -17,10 +17,10 @@ Use the memory extension cache:
     - redis
         - phpredis extension must be installed
         - HAIL_OPTIMIZE_REDIS must be defined
-- HAIL_OPTIMIZE_EXPIRE
-    - cache expiration time (seconds)
-    - 0 means not expired
-    - if not defined, the default value is 0
+    - memory
+        - saving data with PHP arrays
+    - none
+        - disable
 - HAIL_OPTIMIZE_DELAY
     - The time interval between checking whether the cached file changes (seconds)
     - 0 means check every time you get data
@@ -44,38 +44,28 @@ class Example
     public function __construct(string $folder)
     {
         $this->folder = $folder;
-        
-        // support multiple instances, can be ignored in singleton mode
-        self::optimizePrefix(md5($folder));
-
-        // for Example::getSerializeData
-        self::optimizeReader('data', static fucntion (string $file) {
-            return unserialize(file_get_contents($file));
-        });
+    }
+    
+    public function dataReader(string $file)
+    {
+        return unserialize(file_get_contents($file));
     }
     
     public function get($name)
     {
         $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.json';
-
-        // return self::optimizeLoad($file);
-        // or
-        $data = self::optimizeGet($name, $file);
-        if ($data === false) {
-            $content = file_get_contents($file);
-            $data = json_decode($content, true);
-
-            self::optimizeSet($name, $data, $file);
-        }
-
-        return $data;
+        return $this->optimize()->load($file);
     }
     
     public function getSerializeData($name)
     {
         $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.data';
 
-        return self::optimizeLoad($file);
+        return $this->optimize()->load($file, [$this, 'loadData']);
+    }
+    
+    public function loadData(string $file) {
+        return unserialize(file_get_contents($file));
     }
 }
 ```

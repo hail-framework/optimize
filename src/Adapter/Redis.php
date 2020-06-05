@@ -70,33 +70,15 @@ class Redis implements AdapterInterface
 
     public function get(string $key)
     {
-        $value = $this->redis->get($key);
-
-        if ($value === false) {
-            return false;
-        }
-
-        return $value;
+        return $this->redis->get($key);
     }
 
-    public function setMultiple(array $values, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0): bool
     {
         if ($ttl > 0) {
-            $success = true;
-            foreach ($values as $key => $value) {
-                if (!$this->redis->setEx($key, $ttl, $value)) {
-                    $success = false;
-                }
-            }
-
-            return $success;
+            return $this->redis->setEx($key, $ttl, $value) === true;
         }
 
-        return $this->redis->mSet($values);
-    }
-
-    public function set(string $key, $value, int $ttl = 0)
-    {
-        return $this->redis->set($key, $value, $ttl);
+        return $this->redis->set($key, $value) === true;
     }
 }

@@ -28,15 +28,8 @@ class Apcu implements AdapterInterface
         return \apcu_fetch($key);
     }
 
-    public function set(string $key, $value, int $ttl = 0)
+    public function set(string $key, $value, int $ttl = 0): bool
     {
-        return \apcu_store($key, $value, $ttl);
-    }
-
-    public function setMultiple(array $values, int $ttl = 0)
-    {
-        $result = \apcu_store($values, null, $ttl);
-
-        return !($result === false || \count($result) > 0);
+        return \apcu_store($key, $value, $ttl) === true;
     }
 }

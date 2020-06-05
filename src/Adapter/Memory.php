@@ -2,20 +2,15 @@
 
 namespace Hail\Optimize\Adapter;
 
-\defined('WINCACHE_EXTENSION') || \define('WINCACHE_EXTENSION', \extension_loaded('wincache'));
-
 use Hail\Optimize\AdapterInterface;
 
-class WinCache implements AdapterInterface
+class Memory implements AdapterInterface
 {
     private static $instance;
+    private $cache;
 
     public static function getInstance(array $config): ?AdapterInterface
     {
-        if (!WINCACHE_EXTENSION) {
-            return null;
-        }
-
         if (self::$instance === null) {
             self::$instance = new static();
         }
@@ -25,8 +20,12 @@ class WinCache implements AdapterInterface
 
     public function get(string $key)
     {
-        $value = \wincache_ucache_get($key, $success);
-        if ($success === false) {
+        if (!isset($this->cache[$key])) {
+            return false;
+        }
+
+        [$value, $expire] = $this->cache[$key];
+        if ($expire > 0 && $expire < \time()) {
             return false;
         }
 
@@ -35,6 +34,13 @@ class WinCache implements AdapterInterface
 
     public function set(string $key, $value, int $ttl = 0): bool
     {
-        return \wincache_ucache_set($key, $value, $ttl) !== false;
+        $expire = 0;
+        if ($ttl > 0) {
+            $expire = \time() + $ttl;
+        }
+
+        $this->cache[$key] = [$value, $expire];
+
+        return true;
     }
 }
