@@ -61,11 +61,7 @@ class Example
     {
         $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.data';
 
-        return $this->optimize()->load($file, [$this, 'loadData']);
-    }
-    
-    public function loadData(string $file) {
-        return unserialize(file_get_contents($file));
+        return $this->optimize()->load($file, [$this, 'dataReader']);
     }
 }
 ```
