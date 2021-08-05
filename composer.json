@@ -28,6 +28,6 @@
     "ext-yac": "Use yac as cache",
     "ext-apcu": "Use apcu as cache",
     "ext-wincache": "Use wincache as cache",
-    "ext-redis": "Use redis as cache, additional env must be configured"
+    "ext-redis": "Use redis as cache, connection settings defined in 'HAIL_OPTIMIZE_REDIS'"
   }
 }
