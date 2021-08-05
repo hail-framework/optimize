@@ -3,29 +3,26 @@
 namespace Hail\Optimize\Adapter;
 
 \defined('YAC_EXTENSION') || \define('YAC_EXTENSION', \class_exists('\Yac'));
+if (!YAC_EXTENSION) {
+    \define('YAC_MAX_KEY_LEN', 48);
+}
 
 use Hail\Optimize\AdapterInterface;
 
 class Yac implements AdapterInterface
 {
-    /**
-     * @var \Yac
-     */
-    private $yac;
+    private static int $pos;
 
-    private static $instance;
+    private \Yac $yac;
 
-    public static function getInstance(array $config): ?AdapterInterface
+    public static function make(array $config): ?static
     {
         if (!YAC_EXTENSION) {
             return null;
         }
 
-        if (self::$instance === null) {
-            self::$instance = new static();
-        }
-
-        return self::$instance;
+        static::$pos ??= \YAC_MAX_KEY_LEN - 1;
+        return new static();
     }
 
     public function __construct()
@@ -33,21 +30,27 @@ class Yac implements AdapterInterface
         $this->yac = new \Yac();
     }
 
-    public function get(string $key)
+    public function get(string $key): ?array
     {
-        return $this->yac->get(
+        $ret = $this->yac->get(
             self::key($key)
         );
+
+        if ($ret === false) {
+            return null;
+        }
+
+        return $ret;
     }
 
-    public function set(string $key, $value, int $ttl = 0): bool
+    public function set(string $key, array $value, int $ttl = 0): bool
     {
         return $this->yac->set(self::key($key), $value, $ttl) !== false;
     }
 
-    private static function key($key)
+    private static function key(string $key): string
     {
-        if (\strlen($key) > \YAC_MAX_KEY_LEN) {
+        if (isset($key[static::$pos])) {
             return \sha1($key);
         }
 

@@ -8,12 +8,9 @@ use Hail\Optimize\AdapterInterface;
 
 class Redis implements AdapterInterface
 {
-    /**
-     * @var \Redis
-     */
-    private $redis;
+    private \Redis $redis;
 
-    public static function getInstance(array $config): ?AdapterInterface
+    public static function make(array $config): ?static
     {
         if (!PHP_REDIS_EXTENSION || empty($config['redis'])) {
             return null;
@@ -21,7 +18,7 @@ class Redis implements AdapterInterface
 
         try {
             return new static($config['redis']);
-        } catch (\Throwable $e) {
+        } catch (\Throwable) {
             return null;
         }
     }
@@ -68,12 +65,17 @@ class Redis implements AdapterInterface
         }
     }
 
-    public function get(string $key)
+    public function get(string $key): ?array
     {
-        return $this->redis->get($key);
+        $ret = $this->redis->get($key);
+        if ($ret === false) {
+            return null;
+        }
+
+        return $ret;
     }
 
-    public function set(string $key, $value, int $ttl = 0): bool
+    public function set(string $key, array $value, int $ttl = 0): bool
     {
         if ($ttl > 0) {
             return $this->redis->setEx($key, $ttl, $value) === true;

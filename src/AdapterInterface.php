@@ -5,9 +5,9 @@ namespace Hail\Optimize;
 
 interface AdapterInterface
 {
-    public static function getInstance(array $config): ?AdapterInterface;
+    public static function make(array $config): ?static;
 
-    public function get(string $key);
+    public function get(string $key): ?array;
 
-    public function set(string $key, $value, int $ttl = 0): bool;
+    public function set(string $key, array $value, int $ttl = 0): bool;
 }

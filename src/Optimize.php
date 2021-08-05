@@ -18,27 +18,18 @@ use Hail\Optimize\Exception\{
 class Optimize
 {
     private const ADAPTERS = [
+        'yac' => Yac::class,
         'apcu' => Apcu::class,
         'wincache' => WinCache::class,
-        'yac' => Yac::class,
         'redis' => Redis::class,
         'memory' => Memory::class,
     ];
 
-    /**
-     * @var self
-     */
-    private static $instance;
+    private static Optimize $instance;
 
-    /**
-     * @var AdapterInterface|null
-     */
-    private $adapter;
+    private ?AdapterInterface $adapter = null;
 
-    /**
-     * @var int
-     */
-    private $delay;
+    private int $delay;
 
     public function __construct(array $config)
     {
@@ -47,23 +38,19 @@ class Optimize
             return;
         }
 
-        $this->delay = $config['delay'];
+        $this->delay = (int) $config['delay'];
 
-        $adapters = [];
-        if ($adapter === 'auto') {
-            $adapters = self::ADAPTERS;
-        } elseif (isset(self::ADAPTERS[$adapter])) {
-            $adapters = [self::ADAPTERS[$adapter]];
-        } elseif (\is_a($adapter, AdapterInterface::class, true)) {
-            $adapters = [$adapter];
-        }
-
-        if ($adapters === []) {
-            $adapters = self::ADAPTERS;
+        $adapters = self::ADAPTERS;
+        if ($adapter !== 'auto') {
+            if (isset(self::ADAPTERS[$adapter])) {
+                $adapters = [self::ADAPTERS[$adapter]];
+            } elseif (\is_a($adapter, AdapterInterface::class, true)) {
+                $adapters = [$adapter];
+            }
         }
 
         foreach ($adapters as $class) {
-            $adapter = $class::getInstance($config);
+            $adapter = $class::make($config);
             if ($adapter !== null) {
                 $this->adapter = $adapter;
                 break;
@@ -71,101 +58,64 @@ class Optimize
         }
     }
 
-    public static function getInstance(): ?self
+    public static function getInstance(): self
     {
-        if (self::$instance === null) {
-            self::$instance = new self([
+        return self::$instance ??= new self(
+            [
                 'adapter' => \getenv('HAIL_OPTIMIZE_ADAPTER') ?: null,
                 'redis' => \getenv('HAIL_OPTIMIZE_REDIS') ?: null,
                 'delay' => (int) \getenv('HAIL_OPTIMIZE_DELAY'),
-            ]);
-        }
-
-        return self::$instance;
+            ]
+        );
     }
 
-    /**
-     * @param string $key
-     *
-     * @return false|mixed
-     */
-    public function get(string $key)
+    public function get(string $key): ?array
+    {
+        return $this->adapter?->get($key);
+    }
+
+    public function set(string $key, array|string $value, int $ttl = 0): bool
     {
         if ($this->adapter === null) {
             return false;
         }
 
-        return $this->adapter->get($key);
+        return $this->adapter->set($key, [$value, \time()], $ttl);
     }
 
-    public function set(string $key, $value, int $ttl = 0): bool
-    {
-        if ($this->adapter === null) {
-            return false;
-        }
-
-        return $this->adapter->set($key, $value, $ttl);
-    }
-
-    /**
-     * @param string              $file
-     * @param callable|mixed|null $reader
-     *
-     * @return mixed
-     */
-    private function read(string $file, $reader = null)
+    private function read(string $file, callable $reader = null): array|string
     {
         if ($reader !== null) {
-            if (\is_callable($reader)) {
-                return $reader($file);
-            }
-
-            return $reader;
+            return $reader($file);
         }
+
         $ext = \strrchr($file, '.');
-        switch ($ext) {
-            case '.php':
-                return include $file;
-
-            case '.json':
-                return \json_decode(
-                    \file_get_contents($file), true
-                );
-
-            default:
-                throw new FileTypeErrorException('File type can not support:' . $ext);
-        }
+        return match ($ext) {
+            '.php' => include $file,
+            '.json' => \json_decode(\file_get_contents($file), flags: \JSON_OBJECT_AS_ARRAY | \JSON_THROW_ON_ERROR),
+            default => throw new FileTypeErrorException("File type can not support: $ext"),
+        };
     }
 
-    /**
-     * @param string              $file
-     * @param callable|mixed|null $reader
-     *
-     * @return mixed
-     */
-    public function load(string $file, $reader = null)
+    public function load(string $file, callable $reader = null): array|string
     {
-        $file = \realpath($file);
-        if ($file === false) {
-            throw new FileNotExistsException('File not exists');
+        $path = \realpath($file);
+        if ($path === false) {
+            throw new FileNotExistsException("File not exists: $file");
         }
 
-        if ($this->adapter === null) {
-            return $this->read($file, $reader);
-        }
+        $data = $this->get($path);
 
-        $data = $this->adapter->get($file);
-
-        if ($data !== false &&
-            ($data[1] + $this->delay) >= ($now = time()) &&
-            \filemtime($file) >= $data[1]
+        if ($data !== null &&
+            ($data[1] + $this->delay) >= \time() &&
+            \filemtime($path) >= $data[1]
         ) {
-            $data = false;
+            $data = null;
         }
 
-        if ($data === false) {
-            $data = $this->read($file, $reader);
-            $this->adapter->set($file, [$data, $now ?? \time()]);
+        if ($data === null) {
+            $data = $this->read($path, $reader);
+            $this->set($path, $data);
         } else {
             $data = $data[0];
         }

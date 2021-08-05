@@ -4,17 +4,10 @@ namespace Hail\Optimize;
 
 trait OptimizeTrait
 {
-    /**
-     * @var Optimize
-     */
-    protected $optimize;
+    protected Optimize $optimize;
 
     public function optimize(): Optimize
     {
-        if ($this->optimize === null) {
-            $this->optimize = Optimize::getInstance();
-        }
-
-        return $this->optimize;
+        return $this->optimize ??= Optimize::getInstance();
     }
 }

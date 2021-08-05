@@ -39,25 +39,25 @@ class Example
 {
     use OptimizeTrait;
     
-    private $folder;
+    private string $folder;
     
     public function __construct(string $folder)
     {
         $this->folder = $folder;
     }
     
-    public function dataReader(string $file)
+    public function dataReader(string $file): array
     {
         return unserialize(file_get_contents($file));
     }
     
-    public function get($name)
+    public function get(string $name): array
     {
         $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.json';
         return $this->optimize()->load($file);
     }
     
-    public function getSerializeData($name)
+    public function getSerializeData($name): array
     {
         $file = $this->folder . DIRECTORY_SEPARATOR . $name . '.data';
 

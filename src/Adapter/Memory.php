@@ -6,33 +6,28 @@ use Hail\Optimize\AdapterInterface;
 
 class Memory implements AdapterInterface
 {
-    private static $instance;
-    private $cache;
+    private array $cache = [];
 
-    public static function getInstance(array $config): ?AdapterInterface
+    public static function make(array $config): ?static
     {
-        if (self::$instance === null) {
-            self::$instance = new static();
-        }
-
-        return self::$instance;
+        return new static();
     }
 
-    public function get(string $key)
+    public function get(string $key): ?array
     {
         if (!isset($this->cache[$key])) {
-            return false;
+            return null;
         }
 
         [$value, $expire] = $this->cache[$key];
         if ($expire > 0 && $expire < \time()) {
-            return false;
+            return null;
         }
 
         return $value;
     }
 
-    public function set(string $key, $value, int $ttl = 0): bool
+    public function set(string $key, array $value, int $ttl = 0): bool
     {
         $expire = 0;
         if ($ttl > 0) {

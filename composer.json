@@ -21,13 +21,13 @@
   },
   "license": "MIT",
   "require": {
-    "php": ">=7.1.3",
+    "php": ">=8.0.0",
     "ext-json": "*"
   },
   "suggest": {
-    "ext-apcu": "Use apcu as cache",
     "ext-yac": "Use yac as cache",
+    "ext-apcu": "Use apcu as cache",
     "ext-wincache": "Use wincache as cache",
-    "ext-redis": "Use redis as cache, additional settings must be configured"
+    "ext-redis": "Use redis as cache, additional env must be configured"
   }
 }

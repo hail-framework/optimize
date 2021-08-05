@@ -8,27 +8,26 @@ use Hail\Optimize\AdapterInterface;
 
 class Apcu implements AdapterInterface
 {
-    private static $instance;
-
-    public static function getInstance(array $config): ?AdapterInterface
+    public static function make(array $config): ?static
     {
         if (!APCU_EXTENSION) {
             return null;
         }
 
-        if (self::$instance === null) {
-            self::$instance = new static();
+        return new static();
+    }
+
+    public function get(string $key): ?array
+    {
+        $ret = \apcu_fetch($key);
+        if ($ret === false) {
+            return null;
         }
 
-        return self::$instance;
+        return $ret;
     }
 
-    public function get(string $key)
-    {
-        return \apcu_fetch($key);
-    }
-
-    public function set(string $key, $value, int $ttl = 0): bool
+    public function set(string $key, array $value, int $ttl = 0): bool
     {
         return \apcu_store($key, $value, $ttl) === true;
     }
